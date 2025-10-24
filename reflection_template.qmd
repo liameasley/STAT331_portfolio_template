@@ -117,7 +117,7 @@ teacher_evals_clean <- teacher_evals |>
  
 # Lab 4 Q5
 
-med_income <- ca_childcare %>% 
+ca_childcare %>% 
   group_by(region, study_year) %>% 
   summarize(med = median(mhi_2018)) %>% 
   filter(study_year == 2008 | study_year == 2018) %>% 
@@ -452,7 +452,7 @@ ca_childcare %>%
 
 # Lab 4 Q5
 
-med_income <- ca_childcare %>% 
+ca_childcare %>% 
   group_by(region, study_year) %>% 
   summarize(med = median(mhi_2018)) %>% 
   filter(study_year == 2008 | study_year == 2018) %>% 
@@ -470,11 +470,11 @@ med_income <- ca_childcare %>%
 
 The following assignments satisfy the above criteria:
 
--   Example 1
--   Example 2
--   Example 3
--   Example 4
--   Example 5
+-   Lab 2
+-   Lab 3
+-   Lab 4
+-   Lab 5
+-   Challenge 3
 
 **R-2: I can write well documented and tidy code.**
 
@@ -483,6 +483,16 @@ The following assignments satisfy the above criteria:
 ```{r}
 #| label: r-2-1
 
+# Lab 2 Q16
+
+ggplot(data = surveys, 
+       mapping = aes(y = species, x = weight)) +
+  geom_jitter(alpha = 0.1, color = "steelblue") +
+  geom_boxplot(outlier.shape = NA) +
+  labs(y = "Species",
+       x = "Weight (g)"
+       )
+
 ```
 
 -   Example of **dplyr** pipeline
@@ -490,12 +500,19 @@ The following assignments satisfy the above criteria:
 ```{r}
 #| label: r-2-2
 
+# Lab 4 Q3
+
+ca_childcare <- ca_childcare %>% 
+  left_join(y = tax_rev,
+            by = join_by(county_name == entity_name, study_year == year)
+            )
 ```
 
 -   Example of function formatting
 
 ```{r}
 #| label: r-2-3
+
 
 ```
 
@@ -505,6 +522,7 @@ The following assignments satisfy the above criteria:
 
 ```{r}
 #| label: r-3-example
+
 
 ```
 
@@ -524,6 +542,16 @@ The following assignments satisfy the above criteria:
 ```{r}
 #| label: dvs-1-num
 
+# Lab 2 Q4
+
+ggplot(data = surveys,
+       mapping = aes(x = weight, y = hindfoot_length)) +
+  geom_point(alpha = .1) +
+  facet_wrap(~species) +
+  labs(x = "Hindfoot Length (mm)",
+       y = NULL,
+       title = "Rodent Observations from the Portal Project",
+       subtitle = "Weight (g)")
 ```
 
 -   At least one numeric variable and one categorical variable
@@ -531,6 +559,14 @@ The following assignments satisfy the above criteria:
 ```{r}
 #| label: dvs-2-num-cat
 
+# Lab 2 Q8
+
+ggplot(data = surveys, 
+       mapping = aes(x = species, y = weight)) +
+  geom_jitter(alpha = 0.1, color = "steelblue") +
+  geom_boxplot(outlier.shape = NA) +
+  labs(x = "Species", y = "Weight (g)") +
+  theme(axis.text.x = element_text(angle = 45))
 ```
 
 -   At least two categorical variables
@@ -538,12 +574,22 @@ The following assignments satisfy the above criteria:
 ```{r}
 #| label: dvs-2-cat
 
+# Challenge 2
+
+ggplot(data = surveys, 
+       mapping = aes(y = species, x = weight, fill = sex)) +
+  geom_jitter(alpha = 0.1, color = "steelblue") +
+  geom_boxplot(outlier.shape = NA) +
+  labs(subtitle = "Species", y = NULL, x = "Weight (g)", fill = "Sex") +
+  scale_fill_brewer(palette = "PuRd") +
+  theme_bw()
 ```
 
 -   Dates (time series plot)
 
 ```{r}
 #| label: dvs-2-date
+
 
 ```
 
@@ -554,6 +600,15 @@ The following assignments satisfy the above criteria:
 ```{r}
 #| label: dvs-2-ex-1
 
+# Challenge 2
+
+ggplot(data = surveys, 
+       mapping = aes(y = species, x = weight, fill = sex)) +
+  geom_jitter(alpha = 0.1, color = "steelblue") +
+  geom_boxplot(outlier.shape = NA) +
+  labs(subtitle = "Species", y = NULL, x = "Weight (g)", fill = "Sex") +
+  scale_fill_brewer(palette = "PuRd") +
+  theme_bw()
 ```
 
 -   I can modify my colors to be accessible to anyone's eyes
@@ -561,6 +616,23 @@ The following assignments satisfy the above criteria:
 ```{r}
 #| label: dvs-2-ex-2
 
+# Challenge 3 Q2
+
+teacher_evals_compare |> 
+  ggplot(mapping = aes(x = sen_level, fill = SET_level)) +
+    geom_bar(stat = "count", position = "fill") +
+    scale_y_continuous(labels = percent_format()) +
+    scale_fill_manual(
+      values = c("excellent" = "#b896d4",
+                 "standard" = "#ba955c"
+                 )) +
+    labs(title = "Evaluation of Teachers' Use of Activities",
+         x = "Years of Experience",
+         y = NULL,
+         fill = "Evaluation Rating"
+         ) +
+    theme_bw() +
+    theme(legend.position = "top")
 ```
 
 -   I can modify my plot titles to clearly communicate the data context
@@ -568,6 +640,26 @@ The following assignments satisfy the above criteria:
 ```{r}
 #| label: dvs-2-ex-3
 
+# Lab 4 Q8
+
+mhi_cbc <- ca_childcare %>% 
+  select(region, study_year, mhi_2018, mc_infant) %>% 
+  group_by(region, study_year) %>% 
+  summarize(med_mhi_2018 = median(mhi_2018),
+            med_mc_infant = median(mc_infant)) %>% 
+  ungroup()
+
+mhi_cbc %>% 
+  ggplot(mapping = aes(x = med_mhi_2018,
+                       y = med_mc_infant)) +
+    geom_point() + 
+    geom_smooth(method = lm) +
+    theme_bw() +
+    labs(x = "Median Household Income (in 2018 dollars)",
+         y = "Full-time median weekly price",
+         title = "California Household Income and Center-based Childcare for Infants") +
+    scale_x_continuous(labels = scales::label_currency(prefix = "$")) +
+    scale_y_continuous(labels = scales::label_currency(prefix = "$"))
 ```
 
 -   I can modify the text in my plot to be more readable
@@ -575,6 +667,14 @@ The following assignments satisfy the above criteria:
 ```{r}
 #| label: dvs-2-ex-4
 
+# Lab 2 Q8
+
+ggplot(data = surveys, 
+       mapping = aes(x = species, y = weight)) +
+  geom_jitter(alpha = 0.1, color = "steelblue") +
+  geom_boxplot(outlier.shape = NA) +
+  labs(x = "Species", y = "Weight (g)") +
+  theme(axis.text.x = element_text(angle = 45))
 ```
 
 -   I can reorder my legend to align with the colors in my plot
@@ -582,6 +682,45 @@ The following assignments satisfy the above criteria:
 ```{r}
 #| label: dvs-2-ex-5
 
+# Lab 4 Q7
+
+
+ca_childcare %>% 
+  select(region, study_year, mc_infant, mc_toddler, mc_preschool) %>% 
+  group_by(region, study_year) %>% 
+  summarize(med_infant = median(mc_infant),
+            med_toddler = median(mc_toddler),
+            med_preschool = median(mc_preschool)) %>% 
+  ungroup() %>% 
+  pivot_longer(cols = med_infant : med_preschool,
+               names_to = "Age Group",
+               values_to = "Amount") %>% 
+  mutate(`Age Group` = fct_recode(.f = `Age Group`,
+                                  "Infant" = "med_infant",
+                                  "Toddler" = "med_toddler",
+                                  "Preschool" = "med_preschool"),
+         `Age Group` = fct_relevel(`Age Group`, "Infant", "Toddler", "Preschool")
+         ) %>% 
+  ggplot(mapping = aes(x = study_year,
+                       y = Amount,
+                       color = fct_reorder2(.f = region,
+                                            .x = study_year,
+                                            .y = Amount)
+                       )) +
+    facet_wrap(~`Age Group`) +
+    geom_point() +
+    geom_smooth(method = loess, formula = y ~ x) +
+    labs(x = "Study Year",
+         y = NULL,
+         title = "Weekly Median Price for Center-Based Childcare ($)",
+         color = "California Region") +
+    scale_x_continuous(breaks = seq(2008, 2018, by =2)) +
+    theme_bw() +
+    theme(aspect.ratio = 1,
+          axis.text.x  = element_text(size = 5),
+          plot.title = element_text(size = 10),
+          legend.text = element_text(size = 6.5)) +
+    scale_y_continuous(labels = scales::label_currency(prefix = "$"))
 ```
 
 **DVS-3: I show creativity in my visualizations**
@@ -591,12 +730,23 @@ The following assignments satisfy the above criteria:
 ```{r}
 #| label: dvs-3-1-ex-1
 
+
+# Challenge 2
+
+ggplot(data = surveys, 
+       mapping = aes(y = species, x = weight, fill = sex)) +
+  geom_jitter(alpha = 0.1, color = "steelblue") +
+  geom_boxplot(outlier.shape = NA) +
+  labs(subtitle = "Species", y = NULL, x = "Weight (g)", fill = "Sex") +
+  scale_fill_brewer(palette = "PuRd") +
+  theme_bw()
 ```
 
 -   I can use non-standard colors (Example 2)
 
 ```{r}
 #| label: dvs-3-1-ex-2
+
 
 ```
 
@@ -621,12 +771,25 @@ The following assignments satisfy the above criteria:
 ```{r}
 #| label: dvs-4-summarize
 
+# Lab 4 Q6
+
+ca_childcare %>% 
+  group_by(region, study_year) %>% 
+  summarize(med_infant = median(mc_infant)) %>% 
+  filter(study_year == 2018) %>% 
+  ungroup() %>% 
+  pivot_wider(
+              names_from = study_year,
+              values_from = med_infant
+              ) %>% 
+  slice_min(order_by = `2018`)
 ```
 
 -   Example using `across()`
 
 ```{r}
 #| label: dvs-4-across
+
 
 ```
 
@@ -651,6 +814,19 @@ teacher_evals_clean |>
 ```{r}
 #| label: dvs-5-2
 
+# Lab 4 Q5
+
+ca_childcare %>% 
+  group_by(region, study_year) %>% 
+  summarize(med = median(mhi_2018)) %>% 
+  filter(study_year == 2008 | study_year == 2018) %>% 
+  ungroup() %>% 
+  pivot_wider(
+              names_from = study_year,
+              values_from = med
+              ) %>% 
+  arrange(desc(`2018`))
+
 ```
 
 **DVS-6: I can create tables which make my summaries clear to the reader.**
@@ -659,6 +835,7 @@ teacher_evals_clean |>
 
 ```{r}
 #| label: dvs-6-ex-1
+
 
 ```
 
@@ -690,6 +867,19 @@ teacher_evals_clean |>
 ```{r}
 #| label: dvs-7-ex-2
 
+# Lab 4 Q5
+
+ca_childcare %>% 
+  group_by(region, study_year) %>% 
+  summarize(med = median(mhi_2018)) %>% 
+  filter(study_year == 2008 | study_year == 2018) %>% 
+  ungroup() %>% 
+  pivot_wider(
+              names_from = study_year,
+              values_from = med
+              ) %>% 
+  arrange(desc(`2018`))
+
 ```
 
 ## Program Efficiency
@@ -701,6 +891,13 @@ teacher_evals_clean |>
 ```{r}
 #| label: pe-1-one-call
 
+# Lab 5
+
+crime_scene_report %>% 
+  filter(date == 20180115,
+         type == "murder",
+         city == "SQL City") %>% # Filtering for murders in SQL city on January 15, 2018
+  pull(description) # Extracting description
 ```
 
 -   using `across()`
@@ -708,12 +905,14 @@ teacher_evals_clean |>
 ```{r}
 #| label: pe-1-across
 
+
 ```
 
 -   using functions from the `map()` family
 
 ```{r}
 #| label: pe-1-map-1
+
 
 ```
 
