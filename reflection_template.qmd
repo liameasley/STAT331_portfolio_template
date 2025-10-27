@@ -80,6 +80,33 @@ teacher_evals_clean <- teacher_evals |>
 ```{r}
 #| label: wd-2-ex-2
 
+# Lab 3 Q7 (alternate response)
+
+demographics <- teacher_evals_clean |>
+  select(-c(course_id, question_no, no_participants, resp_share, SET_score_avg, percent_failed_cur)) |>
+  group_by(academic_degree, seniority, sex) |>
+  summarize(n_instructors = n()) |>
+  ungroup()
+
+demographics |>
+  group_by(sex) |>
+  summarize(n = n())|>
+  ungroup()
+
+demographics |>
+  group_by(academic_degree, sex) |>
+  summarize(n=n())|>
+  ungroup()
+
+demographics |>
+  group_by(sex) |>
+  summarize(seniority_mean = mean(seniority))|>
+  ungroup()
+
+demographics |>
+  group_by(academic_degree) |>
+  summarize(seniority_mean = mean(seniority))|>
+  ungroup()
 ```
 
 -   Example selecting columns based on logical values (e.g., `starts_with()`, `ends_with()`, `contains()`, `where()`)
@@ -87,6 +114,43 @@ teacher_evals_clean <- teacher_evals |>
 ```{r}
 #| label: wd-2-ex-3
 
+# Lab 4 Q7 (modified)
+
+ca_childcare %>% 
+  select(region, study_year, starts_with("mc_")) %>%  
+  group_by(region, study_year) %>% 
+  summarize(across(.cols = c(mc_infant, mc_toddler, mc_preschool), .fns = ~ median(.x), .names = "med_{.col}")) %>% 
+  ungroup() %>% 
+  pivot_longer(cols = med_mc_infant : med_mc_preschool,
+               names_to = "Age Group",
+               values_to = "Amount") %>% 
+  mutate(`Age Group` = fct_recode(.f = `Age Group`,
+                                  "Infant" = "med_mc_infant",
+                                  "Toddler" = "med_mc_toddler",
+                                  "Preschool" = "med_mc_preschool"),
+         `Age Group` = fct_relevel(`Age Group`, "Infant", "Toddler", "Preschool")
+         ) %>% 
+  ggplot(mapping = aes(x = study_year,
+                       y = Amount,
+                       color = fct_reorder2(.f = region,
+                                            .x = study_year,
+                                            .y = Amount)
+                       )) +
+    facet_wrap(~`Age Group`) +
+    geom_point() +
+    geom_smooth(method = loess, formula = y ~ x) +
+    scale_color_brewer(palette = "Set2") +
+    labs(x = "Study Year",
+         y = NULL,
+         title = "Weekly Median Price for Center-Based Childcare ($)",
+         color = "California Region") +
+    scale_x_continuous(breaks = seq(2008, 2018, by =2)) +
+    theme_bw() +
+    theme(aspect.ratio = 1,
+          axis.text.x  = element_text(size = 5),
+          plot.title = element_text(size = 10),
+          legend.text = element_text(size = 6.5)) +
+    scale_y_continuous(labels = scales::label_currency(prefix = "$"))
 ```
 
 **WD-3: I can filter rows from a dataframe for a *variety* of data types (e.g., numeric, integer, character, factor, date).**
@@ -120,13 +184,14 @@ teacher_evals_clean <- teacher_evals |>
 ca_childcare %>% 
   group_by(region, study_year) %>% 
   summarize(med = median(mhi_2018)) %>% 
-  filter(study_year == 2008 | study_year == 2018) %>% 
-  ungroup() %>% 
+  ungroup() %>%
+  filter(study_year %in% c(2010, 2018)) %>% 
   pivot_wider(
               names_from = study_year,
-              values_from = med
+              values_from = med,
+              names_prefix = "med_income_"
               ) %>% 
-  arrange(desc(`2018`))
+  arrange(desc("med_income_2018"))
 
 ```
 
@@ -178,7 +243,26 @@ inner_join(x = person,
 ```{r}
 #| label: wd-3-date
 
+# Lab 5
 
+inner_join(x = get_fit_now_check_in,
+           y = get_fit_now_member,
+           by = join_by(membership_id == id)
+           ) %>% # Join Get Fit check in and membership data by member id
+  inner_join(y = person,
+             by = join_by(person_id == id)
+             ) %>% # Join new data set with person data set by person id
+    inner_join(y = drivers_license,
+               by = join_by(license_id == id)
+               ) %>% # Join previous data set with driver's license data set by license id
+    mutate(check_in_date = ymd(check_in_date)) %>% 
+      filter(str_detect(membership_id, pattern = "^48Z"),
+             membership_status == "gold",
+             str_detect(plate_number, pattern = "H42W"),
+             gender == "male",
+             check_in_date == mdy("January 09, 2018")
+             ) %>% # Filter for a male gold member at Get Fit who checked in on January 9, 2018, with a member id that starts with "48Z", and a license plate containing "H42W"
+      pull(name.x) # Extract name of initial suspect
 ```
 
 **WD-4: I can modify existing variables and create new variables in a dataframe for a *variety* of data types (e.g., numeric, integer, character, factor, date).**
@@ -188,7 +272,18 @@ inner_join(x = person,
 ```{r}
 #| label: wd-4-numeric-ex-1
 
+# Challenge 3 Q1 (modified)
 
+teacher_evals_compare <- teacher_evals |>
+  mutate(question_no = question_no - 900,
+         SET_level = if_else(SET_score_avg >= 4, "excellent", "standard"),
+         sen_level = case_when(
+           seniority <= 4 ~ "junior",
+           seniority >= 5 & seniority <= 8 ~ "senior",
+           seniority > 8 ~ "very senior"
+           )) |>
+  filter(question_no == 03) |>
+  select(course_id, SET_level, sen_level)
 ```
 
 -   Numeric Example 2
@@ -196,7 +291,10 @@ inner_join(x = person,
 ```{r}
 #| label: wd-4-numeric-ex-2
 
+# Lab 3 Made-up Question (create new variable that has the number of participants that failed)
 
+teacher_evals <- teacher_evals %>%
+  mutate(num_failed = no_participants * (percent_failed / 100))
 ```
 
 -   Factor Example 1 (renaming levels)
@@ -294,7 +392,21 @@ ca_childcare %>%
 ```{r}
 #| label: wd-4-string
 
+# Lab 4 Q4
 
+ca_childcare <- ca_childcare %>% 
+  mutate(county_name = str_remove(county_name, " County")) %>% 
+  mutate(region = fct_collapse(.f = county_name,
+                               "Superior California" = superior_counties,
+                               "North Coast" = north_coast_counties,
+                               "San Francisco Bay Area" = san_fran_counties,
+                               "Northern San Joaquin Valley" = n_san_joaquin_counties,
+                               "Central Coast" = central_coast_counties,
+                               "Southern San Joaquin Valley" = s_san_joaquin_counties,
+                               "Inland Empire" = inland_counties,
+                               "Los Angeles County" = la_county,
+                               "Orange County" = orange_county,
+                               "San Diego-Imperial" = san_diego_imperial_counties))
 ```
 
 -   Date (example must use functions from **lubridate**)
@@ -302,6 +414,26 @@ ca_childcare %>%
 ```{r}
 #| label: wd-4-date
 
+# Lab 5
+
+inner_join(x = get_fit_now_check_in,
+           y = get_fit_now_member,
+           by = join_by(membership_id == id)
+           ) %>% # Join Get Fit check in and membership data by member id
+  inner_join(y = person,
+             by = join_by(person_id == id)
+             ) %>% # Join new data set with person data set by person id
+    inner_join(y = drivers_license,
+               by = join_by(license_id == id)
+               ) %>% # Join previous data set with driver's license data set by license id
+    mutate(check_in_date = ymd(check_in_date)) %>% 
+      filter(str_detect(membership_id, pattern = "^48Z"),
+             membership_status == "gold",
+             str_detect(plate_number, pattern = "H42W"),
+             gender == "male",
+             check_in_date == mdy("January 09, 2018")
+             ) %>% # Filter for a male gold member at Get Fit who checked in on January 9, 2018, with a member id that starts with "48Z", and a license plate containing "H42W"
+      pull(name.x) # Extract name of initial suspect
 ```
 
 **WD-5: I can use mutating joins to combine multiple dataframes.**
@@ -327,7 +459,7 @@ ca_childcare <- ca_childcare %>%
 # Lab 4 Q3 (modified)
 
 ca_childcare <- tax_rev %>% 
-  left_join(y = ca_childcare,
+  right_join(y = ca_childcare,
             by = join_by(entity_name == county_name, year == study_year)
             )
 ```
@@ -337,6 +469,15 @@ ca_childcare <- tax_rev %>%
 ```{r}
 #| label: wd-5-left-right-ex-2
 
+# Lab 4 Q2 (modified - keep all California counties and join their childcare data if it exists)
+
+ca_childcare <- counties %>%
+  left_join(
+             x = counties,
+             y = childcare_costs,
+             by = join_by(county_fips_code == county_fips_code)
+             ) %>% 
+  filter(state_name == "California")
 ```
 
 -   `inner_join()` Example 1
@@ -389,6 +530,12 @@ inner_join(x = get_fit_now_check_in,
 ```{r}
 #| label: wd-6-semi
 
+# Lab 4 Q2 (modified to look for California counties have childcare cost data available)
+
+ca_childcare <- counties %>%
+  filter(state_name == "California") %>%
+  semi_join(childcare_costs,
+            by = join_by(county_fips_code == county_fips_code))
 ```
 
 -   `anti_join()`
@@ -396,6 +543,12 @@ inner_join(x = get_fit_now_check_in,
 ```{r}
 #| label: wd-6-anti
 
+# Lab 4 Q3 (modified to look for California counties that don't have matching tax revenue data)
+
+ca_childcare <- ca_childcare %>% 
+  anti_join(y = tax_rev,
+            by = join_by(county_name == entity_name, study_year == year)
+            )
 ```
 
 **WD-7: I can pivot dataframes from long to wide and visa versa**
@@ -455,13 +608,14 @@ ca_childcare %>%
 ca_childcare %>% 
   group_by(region, study_year) %>% 
   summarize(med = median(mhi_2018)) %>% 
-  filter(study_year == 2008 | study_year == 2018) %>% 
-  ungroup() %>% 
+  ungroup() %>%
+  filter(study_year %in% c(2010, 2018)) %>% 
   pivot_wider(
               names_from = study_year,
-              values_from = med
+              values_from = med,
+              names_prefix = "med_income_"
               ) %>% 
-  arrange(desc(`2018`))
+  arrange(desc("med_income_2018"))
 ```
 
 ## Reproducibility
@@ -523,7 +677,19 @@ ca_childcare <- ca_childcare %>%
 ```{r}
 #| label: r-3-example
 
+# Lab 4 Q5
 
+ca_childcare %>% 
+  group_by(region, study_year) %>% 
+  summarize(med = median(mhi_2018)) %>% 
+  ungroup() %>%
+  filter(study_year %in% c(2010, 2018)) %>% 
+  pivot_wider(
+              names_from = study_year,
+              values_from = med,
+              names_prefix = "med_income_"
+              ) %>% 
+  arrange(desc("med_income_2018"))
 ```
 
 -   Example (function stops)
@@ -590,7 +756,43 @@ ggplot(data = surveys,
 ```{r}
 #| label: dvs-2-date
 
+# Lab 4 Q7
 
+ca_childcare %>% 
+  select(region, study_year, starts_with("mc_")) %>%  
+  group_by(region, study_year) %>% 
+  summarize(across(.cols = c(mc_infant, mc_toddler, mc_preschool), .fns = ~ median(.x), .names = "med_{.col}")) %>% 
+  ungroup() %>% 
+  pivot_longer(cols = med_mc_infant : med_mc_preschool,
+               names_to = "Age Group",
+               values_to = "Amount") %>% 
+  mutate(`Age Group` = fct_recode(.f = `Age Group`,
+                                  "Infant" = "med_mc_infant",
+                                  "Toddler" = "med_mc_toddler",
+                                  "Preschool" = "med_mc_preschool"),
+         `Age Group` = fct_relevel(`Age Group`, "Infant", "Toddler", "Preschool")
+         ) %>% 
+  ggplot(mapping = aes(x = study_year,
+                       y = Amount,
+                       color = fct_reorder2(.f = region,
+                                            .x = study_year,
+                                            .y = Amount)
+                       )) +
+    facet_wrap(~`Age Group`) +
+    geom_point() +
+    geom_smooth(method = loess, formula = y ~ x) +
+    scale_color_brewer(palette = "Set2") +
+    labs(x = "Study Year",
+         y = NULL,
+         title = "Weekly Median Price for Center-Based Childcare ($)",
+         color = "California Region") +
+    scale_x_continuous(breaks = seq(2008, 2018, by =2)) +
+    theme_bw() +
+    theme(aspect.ratio = 1,
+          axis.text.x  = element_text(size = 5),
+          plot.title = element_text(size = 10),
+          legend.text = element_text(size = 6.5)) +
+    scale_y_continuous(labels = scales::label_currency(prefix = "$"))
 ```
 
 **DVS-2: I use plot modifications to make my visualization clear to the reader.**
@@ -747,7 +949,43 @@ ggplot(data = surveys,
 ```{r}
 #| label: dvs-3-1-ex-2
 
+# Lab 4 Q7 (modified)
 
+ca_childcare %>% 
+  select(region, study_year, mc_infant, mc_toddler, mc_preschool) %>% 
+  group_by(region, study_year) %>% 
+  summarize(across(.cols = c(mc_infant, mc_toddler, mc_preschool), .fns = ~ median(.x), .names = "med_{.col}")) %>% 
+  ungroup() %>% 
+  pivot_longer(cols = med_mc_infant : med_mc_preschool,
+               names_to = "Age Group",
+               values_to = "Amount") %>% 
+  mutate(`Age Group` = fct_recode(.f = `Age Group`,
+                                  "Infant" = "med_mc_infant",
+                                  "Toddler" = "med_mc_toddler",
+                                  "Preschool" = "med_mc_preschool"),
+         `Age Group` = fct_relevel(`Age Group`, "Infant", "Toddler", "Preschool")
+         ) %>% 
+  ggplot(mapping = aes(x = study_year,
+                       y = Amount,
+                       color = fct_reorder2(.f = region,
+                                            .x = study_year,
+                                            .y = Amount)
+                       )) +
+    facet_wrap(~`Age Group`) +
+    geom_point() +
+    geom_smooth(method = loess, formula = y ~ x) +
+    scale_color_brewer(palette = "Set2") +
+    labs(x = "Study Year",
+         y = NULL,
+         title = "Weekly Median Price for Center-Based Childcare ($)",
+         color = "California Region") +
+    scale_x_continuous(breaks = seq(2008, 2018, by =2)) +
+    theme_bw() +
+    theme(aspect.ratio = 1,
+          axis.text.x  = element_text(size = 5),
+          plot.title = element_text(size = 10),
+          legend.text = element_text(size = 6.5)) +
+    scale_y_continuous(labels = scales::label_currency(prefix = "$"))
 ```
 
 -   I can use annotations (e.g., `geom_text()`)
@@ -755,12 +993,24 @@ ggplot(data = surveys,
 ```{r}
 #| label: dvs-3-2
 
+# Lab 2 Q4
+
+ggplot(data = surveys,
+       mapping = aes(x = weight, y = hindfoot_length)) +
+  geom_point(alpha = .1) +
+  facet_wrap(~species) +
+  labs(x = "Hindfoot Length (mm)",
+       y = NULL,
+       title = "Rodent Observations from the Portal Project",
+       subtitle = "Weight (g)") +
+  geom_text(mapping = aes(label = species))
 ```
 
 -   I can choose creative geometries (e.g., `geom_segment()`, `geom_ribbon)()`)
 
 ```{r}
 #| label: dvs-3-3
+
 
 ```
 
@@ -819,13 +1069,14 @@ teacher_evals_clean |>
 ca_childcare %>% 
   group_by(region, study_year) %>% 
   summarize(med = median(mhi_2018)) %>% 
-  filter(study_year == 2008 | study_year == 2018) %>% 
-  ungroup() %>% 
+  ungroup() %>%
+  filter(study_year %in% c(2010, 2018)) %>% 
   pivot_wider(
               names_from = study_year,
-              values_from = med
+              values_from = med,
+              names_prefix = "med_income_"
               ) %>% 
-  arrange(desc(`2018`))
+  arrange(desc("med_income_2018"))
 
 ```
 
@@ -872,13 +1123,14 @@ ca_childcare %>%
 ca_childcare %>% 
   group_by(region, study_year) %>% 
   summarize(med = median(mhi_2018)) %>% 
-  filter(study_year == 2008 | study_year == 2018) %>% 
-  ungroup() %>% 
+  ungroup() %>%
+  filter(study_year %in% c(2010, 2018)) %>% 
   pivot_wider(
               names_from = study_year,
-              values_from = med
+              values_from = med,
+              names_prefix = "med_income_"
               ) %>% 
-  arrange(desc(`2018`))
+  arrange(desc("med_income_2018"))
 
 ```
 
@@ -905,7 +1157,16 @@ crime_scene_report %>%
 ```{r}
 #| label: pe-1-across
 
+# Lab 3 Q5 (modified)
 
+teacher_evals_clean <- teacher_evals |>
+  rename(sex = gender) |>
+  filter(no_participants >= 10) |>
+  mutate(across(.cols = c(teacher_id, course_id), .fns = ~ as.character(.x))) |>
+  select(
+    course_id, teacher_id, question_no, no_participants, resp_share,
+    SET_score_avg, percent_failed_cur, academic_degree, seniority, sex
+  )
 ```
 
 -   using functions from the `map()` family
@@ -969,6 +1230,26 @@ crime_scene_report %>%
 ```{r}
 #| label: pe-4-1
 
+# Lab 4 Q8
+
+mhi_cbc <- ca_childcare %>% 
+  select(region, study_year, mhi_2018, mc_infant) %>% 
+  group_by(region, study_year) %>% 
+  summarize(med_mhi_2018 = median(mhi_2018),
+            med_mc_infant = median(mc_infant)) %>% 
+  ungroup()
+
+mhi_cbc %>% 
+  ggplot(mapping = aes(x = med_mhi_2018,
+                       y = med_mc_infant)) +
+    geom_point() + 
+    geom_smooth(method = lm) +
+    theme_bw() +
+    labs(x = "Median Household Income (in 2018 dollars)",
+         y = "Full-time median weekly price",
+         title = "California Household Income and Center-based Childcare for Infants") +
+    scale_x_continuous(labels = scales::label_currency(prefix = "$")) +
+    scale_y_continuous(labels = scales::label_currency(prefix = "$"))
 ```
 
 -   I can connect a data wrangling pipeline into a `ggplot()`
@@ -976,6 +1257,44 @@ crime_scene_report %>%
 ```{r}
 #| label: pe-4-2
 
+# Lab 4 Q7
+
+ca_childcare %>% 
+  select(region, study_year, mc_infant, mc_toddler, mc_preschool) %>% 
+  group_by(region, study_year) %>% 
+  summarize(med_infant = median(mc_infant),
+            med_toddler = median(mc_toddler),
+            med_preschool = median(mc_preschool)) %>% 
+  ungroup() %>% 
+  pivot_longer(cols = med_infant : med_preschool,
+               names_to = "Age Group",
+               values_to = "Amount") %>% 
+  mutate(`Age Group` = fct_recode(.f = `Age Group`,
+                                  "Infant" = "med_infant",
+                                  "Toddler" = "med_toddler",
+                                  "Preschool" = "med_preschool"),
+         `Age Group` = fct_relevel(`Age Group`, "Infant", "Toddler", "Preschool")
+         ) %>% 
+  ggplot(mapping = aes(x = study_year,
+                       y = Amount,
+                       color = fct_reorder2(.f = region,
+                                            .x = study_year,
+                                            .y = Amount)
+                       )) +
+    facet_wrap(~`Age Group`) +
+    geom_point() +
+    geom_smooth(method = loess, formula = y ~ x) +
+    labs(x = "Study Year",
+         y = NULL,
+         title = "Weekly Median Price for Center-Based Childcare ($)",
+         color = "California Region") +
+    scale_x_continuous(breaks = seq(2008, 2018, by =2)) +
+    theme_bw() +
+    theme(aspect.ratio = 1,
+          axis.text.x  = element_text(size = 5),
+          plot.title = element_text(size = 10),
+          legend.text = element_text(size = 6.5)) +
+    scale_y_continuous(labels = scales::label_currency(prefix = "$"))
 ```
 
 ## Data Simulation & Statisical Models
@@ -986,6 +1305,7 @@ crime_scene_report %>%
 
 ```{r}
 #| label: dsm-1-1
+
 
 ```
 
@@ -1003,6 +1323,10 @@ crime_scene_report %>%
 ```{r}
 #| label: dsm-2-1
 
+# Lab 4 Q9
+
+reg_mod1 <- lm(med_mc_infant ~ med_mhi_2018, data = mhi_cbc)
+summary(reg_mod1)
 ```
 
 -   Example 2
@@ -1010,6 +1334,9 @@ crime_scene_report %>%
 ```{r}
 #| label: dsm-2-2
 
+# Lab 2 Q17
+
+summary(aov(weight ~ species, data = surveys))
 ```
 
 -   Example 3
@@ -1017,6 +1344,10 @@ crime_scene_report %>%
 ```{r}
 #| label: dsm-2-3
 
+# Challenge 3 Q3
+
+table(teacher_evals_compare$SET_level, teacher_evals_compare$sen_level) |>
+  chisq.test()
 ```
 
 ## Revising My Thinking
