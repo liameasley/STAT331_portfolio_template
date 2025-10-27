@@ -10,7 +10,7 @@ execute:
   echo: true
 ---
 
-[**My Grade:**]{.underline} I believe my grade equivalent to course work evidenced below to be an \_\_.
+[**My Grade:**]{.underline} I believe my grade equivalent to course work evidenced below to be an A-.
 
 [**Learning Objective Evidence:**]{.underline} In the code chunks below, provide code from Lab or Challenge assignments where you believe you have demonstrated proficiency with the specified learning target. Be sure to specify **where** the code came from (e.g., Lab 4 Question 2).
 
@@ -1465,7 +1465,7 @@ I think the largest way I revised my thinking so far is shifting some of my focu
 
 <!-- How did you extended your thinking throughout the course? How did you extend your thinking on the code examples you have provided in your portfolio? -->
 
-Thus far in the course, I have extended my thinking by really honing in on the finer details and aesthetics. For example, I decided to look up some colorblind friendly palettes in the RColorBrewer package and used them in graphs where it was hard to distinguish different parts of the data. Additionally, I learned that oftentimes simplicity is key. I realized I should never add a long title or rotate axis labels just because I know how to, unless it  actually adds something beneficial. Moreover, I think I had a lot of great experiences in the collaborative peer work where I was able to extend my learning by getting to experience a completely different viewpoint and seeing where that leads me. Another key part of my attempts to extend my learning have been to apply new things I learn (mostly about efficiency) to my past work. I hope to have eliminated any of past instances of unnecessary object saving or multiple calls to the same function when redundant. Lastly, I feel really good about my attendance during office hours as I always leave knowing more than I did previously, often learning the minute details of this course’s subject that can’t be covered in class.
+Thus far in the course, I have extended my thinking by really honing in on the finer details and aesthetics. For example, I decided to look up some colorblind friendly palettes in the RColorBrewer package and used them in graphs where it was hard to distinguish different parts of the data. Additionally, I learned that oftentimes simplicity is key. I realized I should never add a long title or rotate axis labels just because I know how to, unless it actually adds something beneficial. Moreover, I think I had a lot of great experiences in the collaborative peer work where I was able to extend my learning by getting to experience a completely different viewpoint (I remember once my partner used a vector instead of a bunch of or statements which is what i would have done). Another key part of my attempts to extend my learning have been to apply new things I learn (mostly about efficiency) to my past work. I have gone back and hopefully eliminated any past instances of unnecessary object saving or multiple calls to the same function when redundant. Lastly, I feel really good about my attendance during office hours as I always leave knowing more than I did previously, often learning the minute details of this course’s subject that can’t be covered in class such as common practice of points' transparency and which geoms to put in front or behind.
 
 ## Peer Support & Collaboration
 
