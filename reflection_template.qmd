@@ -1011,7 +1011,14 @@ ggplot(data = surveys,
 ```{r}
 #| label: dvs-3-3
 
+# Lab 2 Q16
 
+ggplot(data = surveys, 
+       mapping = aes(y = species, x = weight)) +
+  geom_jitter(alpha = 0.1, color = "steelblue") +
+  geom_boxplot(outlier.shape = NA) +
+  labs(y = "Species", x = "Weight (g)") +
+  geom_violin()
 ```
 
 **DVS-4: I can calculate numerical summaries of variables.**
@@ -1040,7 +1047,43 @@ ca_childcare %>%
 ```{r}
 #| label: dvs-4-across
 
+# Lab 4 Q7 (modified)
 
+ca_childcare %>% 
+  select(region, study_year, starts_with("mc_")) %>%  
+  group_by(region, study_year) %>% 
+  summarize(across(.cols = c(mc_infant, mc_toddler, mc_preschool), .fns = ~ median(.x), .names = "med_{.col}")) %>% 
+  ungroup() %>% 
+  pivot_longer(cols = med_mc_infant : med_mc_preschool,
+               names_to = "Age Group",
+               values_to = "Amount") %>% 
+  mutate(`Age Group` = fct_recode(.f = `Age Group`,
+                                  "Infant" = "med_mc_infant",
+                                  "Toddler" = "med_mc_toddler",
+                                  "Preschool" = "med_mc_preschool"),
+         `Age Group` = fct_relevel(`Age Group`, "Infant", "Toddler", "Preschool")
+         ) %>% 
+  ggplot(mapping = aes(x = study_year,
+                       y = Amount,
+                       color = fct_reorder2(.f = region,
+                                            .x = study_year,
+                                            .y = Amount)
+                       )) +
+    facet_wrap(~`Age Group`) +
+    geom_point() +
+    geom_smooth(method = loess, formula = y ~ x) +
+    scale_color_brewer(palette = "Set2") +
+    labs(x = "Study Year",
+         y = NULL,
+         title = "Weekly Median Price for Center-Based Childcare ($)",
+         color = "California Region") +
+    scale_x_continuous(breaks = seq(2008, 2018, by =2)) +
+    theme_bw() +
+    theme(aspect.ratio = 1,
+          axis.text.x  = element_text(size = 5),
+          plot.title = element_text(size = 10),
+          legend.text = element_text(size = 6.5)) +
+    scale_y_continuous(labels = scales::label_currency(prefix = "$"))
 ```
 
 **DVS-5: I can find summaries of variables across multiple groups.**
@@ -1087,13 +1130,23 @@ ca_childcare %>%
 ```{r}
 #| label: dvs-6-ex-1
 
+# Lab 3 Q5
 
+teacher_evals_clean <- teacher_evals |>
+  rename(sex = gender) |>
+  filter(no_participants >= 10) |>
+  mutate(across(.cols = c(teacher_id, course_id), .fns = ~ as.character(.x))) |>
+  select(
+    course_id, teacher_id, question_no, no_participants, resp_share,
+    SET_score_avg, percent_failed_cur, academic_degree, seniority, sex
+  )
 ```
 
 -   I can modify the text in my table to be more readable (e.g., bold face for column headers)
 
 ```{r}
 #| label: dvs-6-ex-2
+
 
 ```
 
@@ -1102,6 +1155,19 @@ ca_childcare %>%
 ```{r}
 #| label: dvs-6-ex-3
 
+# Lab 4 Q5
+
+ca_childcare %>% 
+  group_by(region, study_year) %>% 
+  summarize(med = median(mhi_2018)) %>% 
+  ungroup() %>%
+  filter(study_year %in% c(2010, 2018)) %>% 
+  pivot_wider(
+              names_from = study_year,
+              values_from = med,
+              names_prefix = "med_income_"
+              ) %>% 
+  arrange(desc("med_income_2018"))
 ```
 
 **DVS-7: I show creativity in my tables.**
@@ -1207,6 +1273,43 @@ teacher_evals_clean <- teacher_evals |>
 ```{r}
 #| label: pe-3-across
 
+# Lab 4 Q7 (modified)
+
+ca_childcare %>% 
+  select(region, study_year, starts_with("mc_")) %>%  
+  group_by(region, study_year) %>% 
+  summarize(across(.cols = c(mc_infant, mc_toddler, mc_preschool), .fns = ~ median(.x), .names = "med_{.col}")) %>% 
+  ungroup() %>% 
+  pivot_longer(cols = med_mc_infant : med_mc_preschool,
+               names_to = "Age Group",
+               values_to = "Amount") %>% 
+  mutate(`Age Group` = fct_recode(.f = `Age Group`,
+                                  "Infant" = "med_mc_infant",
+                                  "Toddler" = "med_mc_toddler",
+                                  "Preschool" = "med_mc_preschool"),
+         `Age Group` = fct_relevel(`Age Group`, "Infant", "Toddler", "Preschool")
+         ) %>% 
+  ggplot(mapping = aes(x = study_year,
+                       y = Amount,
+                       color = fct_reorder2(.f = region,
+                                            .x = study_year,
+                                            .y = Amount)
+                       )) +
+    facet_wrap(~`Age Group`) +
+    geom_point() +
+    geom_smooth(method = loess, formula = y ~ x) +
+    scale_color_brewer(palette = "Set2") +
+    labs(x = "Study Year",
+         y = NULL,
+         title = "Weekly Median Price for Center-Based Childcare ($)",
+         color = "California Region") +
+    scale_x_continuous(breaks = seq(2008, 2018, by =2)) +
+    theme_bw() +
+    theme(aspect.ratio = 1,
+          axis.text.x  = element_text(size = 5),
+          plot.title = element_text(size = 10),
+          legend.text = element_text(size = 6.5)) +
+    scale_y_continuous(labels = scales::label_currency(prefix = "$"))
 ```
 
 -   using a `map()` function with **one** input (e.g., `map()`, `map_chr()`, `map_dbl()`, etc.)
@@ -1236,8 +1339,8 @@ mhi_cbc <- ca_childcare %>%
   select(region, study_year, mhi_2018, mc_infant) %>% 
   group_by(region, study_year) %>% 
   summarize(med_mhi_2018 = median(mhi_2018),
-            med_mc_infant = median(mc_infant)) %>% 
-  ungroup()
+            med_mc_infant = median(mc_infant),
+            .groups = "drop")
 
 mhi_cbc %>% 
   ggplot(mapping = aes(x = med_mhi_2018,
@@ -1356,12 +1459,20 @@ table(teacher_evals_compare$SET_level, teacher_evals_compare$sen_level) |>
 
 <!-- For the revisions included in your Portfolio, to help me understand the nature of your revisions, please denote somehow the feedback I provided you (e.g., boldface, italics, colored text) before your revisions. -->
 
+I think the largest way I revised my thinking so far is shifting some of my focus from purely the analytical, number-based aspects of statistics to the presentation of information. I realized how extremely important it is to be able to present your data, analysis, findings, etc., as the ultimate goal is not for only me to understand but for everyone who interacts with my work. I was able to really see this through my peer code reviews as I could look at someone else’s work and be in the position of an outside reader. A recurring aspect of this is seen in my code examples is utilizing axis labels, legends, and titles to provide the reader with vital context not readily available from the plot, while maintaining readability and concision. Additionally, on the more technical side, I have been able to improve greatly on my code efficiency and formatting. Looking back at my first labs, I realized all the different, better ways I could have executed the same tasks using pipes, across(), etc. I was also able to implement much better formatting, allowing any reader to be able to easily understand my code through proper indentation, new lines, and named arguments.
+
 ## Extending My Thinking
 
 <!-- How did you extended your thinking throughout the course? How did you extend your thinking on the code examples you have provided in your portfolio? -->
+
+Thus far in the course, I have extended my thinking by really honing in on the finer details and aesthetics. For example, I decided to look up some colorblind friendly palettes in the RColorBrewer package and used them in graphs where it was hard to distinguish different parts of the data. Additionally, I learned that oftentimes simplicity is key. I realized I should never add a long title or rotate axis labels just because I know how to, unless it  actually adds something beneficial. Moreover, I think I had a lot of great experiences in the collaborative peer work where I was able to extend my learning by getting to experience a completely different viewpoint and seeing where that leads me. Another key part of my attempts to extend my learning have been to apply new things I learn (mostly about efficiency) to my past work. I hope to have eliminated any of past instances of unnecessary object saving or multiple calls to the same function when redundant. Lastly, I feel really good about my attendance during office hours as I always leave knowing more than I did previously, often learning the minute details of this course’s subject that can’t be covered in class.
 
 ## Peer Support & Collaboration
 
 <!-- Include an image or a description of feedback you gave that you are proud of (either in a peer review or in Discord). -->
 
 <!-- Include a description of how you grew as a collaborator through the weekly pair programming activities.   -->
+
+The image I included is a question I asked and then Dr. T answered about peer code reviews. I thought this might be a common question as I have in the past done peer code reviews that focused on different aspects such as focusing more on efficiency. So I’m proud because I think it could have been a common question others had. I also remember leaving a suggestion in one of my peer reviews about using “::” in your code. Namely, that you only really need to use it when you want to use a function from a package that you don’t need or want to fully load in. I was proud of this because it was something I learned from Dr. T and then pass on to a classmate. As far as the weekly pair programming activities go, I feel that I have grown a lot in both roles. As the computer, I have improved at really letting my partner think through their own ideas and not immediately do what I think is right (allowing me to learn new methods I didn’t know prior). As the coder, I have gotten a lot better at being independent and utilizing the resources provided rather than going straight to someone else or outside resources. I have grown extremely fond of the documentation pages for functions.
+
+![](images/clipboard-4124676572.png)
