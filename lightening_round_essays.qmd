@@ -6,12 +6,22 @@ editor: visual
 
 **Answer each of the following questions with *one sentence* including a brief explanation.**
 
-1.  Finish the sentence with another student’s name: "If \[Name of Student\] doesn’t earn an A, then nobody should, because..." Explain your choice and your reasoning.
+1.  Finish the sentence with another student’s name: "If \[Name of Student\] doesn’t earn an A, then nobody should, because..." Explain your choice and your reasoning.\
+    \
+    If Sam Phan doesn’t earn an A, then nobody should, because while I never worked with him at my table or in a practice activity, I was able to see his superior proficiency through multiple code reviews and my difficulty in finding ways for him to improve.
 
-2.  What was the most difficult part of the class for you? List a general topic, a specific problem, a kind of work we did, etc. and explain why.
+2.  What was the most difficult part of the class for you? List a general topic, a specific problem, a kind of work we did, etc. and explain why.\
+    \
+    I struggled the most in this class with learning new packages and functions on my own as I didn't always know where to look for information and the help documentation in R Studio could be hard to understand.
 
-3.  What was the easiest part of the class for you? Explain why.
+3.  What was the easiest part of the class for you? Explain why.\
+    \
+    I think the easiest or most comfortable part of the class for me was when we wrote functions because I already had experience doing it in CSC 101, I quite enjoy creating something of my own, and I know exactly how it works.
 
-4.  What part of the class surprised or interested you the most? Explain why.
+4.  What part of the class surprised or interested you the most? Explain why.\
+    \
+    I think I was most surprised by this class' emphasis on presentation and the audience, focusing on making well-rounded visualizations that provide the proper context, readability, and insight to actually have the reader learn something.
 
-5.  Give one piece of advice to a student just beginning a quarter of STAT 331 that will help them be successful in learning.
+5.  Give one piece of advice to a student just beginning a quarter of STAT 331 that will help them be successful in learning.\
+    \
+    I would tell a new STAT 331 student that it is normal to get frustrated and run into walls about things they don't know so reaching out for help from others on the discord and (in my opinion most helpful) from their instructor is a must.
