@@ -402,21 +402,29 @@ ca_childcare %>%
 ```{r}
 #| label: wd-4-string
 
-# Lab 4 Q4
+# Lab 5 (str_c used)
 
-ca_childcare <- ca_childcare %>% 
-  mutate(county_name = str_remove(county_name, " County")) %>% 
-  mutate(region = fct_collapse(.f = county_name,
-                               "Superior California" = superior_counties,
-                               "North Coast" = north_coast_counties,
-                               "San Francisco Bay Area" = san_fran_counties,
-                               "Northern San Joaquin Valley" = n_san_joaquin_counties,
-                               "Central Coast" = central_coast_counties,
-                               "Southern San Joaquin Valley" = s_san_joaquin_counties,
-                               "Inland Empire" = inland_counties,
-                               "Los Angeles County" = la_county,
-                               "Orange County" = orange_county,
-                               "San Diego-Imperial" = san_diego_imperial_counties))
+inner_join(x = get_fit_now_check_in,
+           y = get_fit_now_member,
+           by = join_by(membership_id == id)
+           ) %>% # Join Get Fit check in and membership data by member id
+  inner_join(y = person,
+             by = join_by(person_id == id, name == name)
+             ) %>% # Join new data set with person data set by person id
+    inner_join(y = drivers_license,
+               by = join_by(license_id == id)
+               ) %>% # Join previous data set with driver's license data set by license id
+      inner_join(y = interview,
+            by = join_by(person_id == person_id)) %>% # Join previous data with interview data by person id
+      mutate(check_in_date = ymd(check_in_date),
+             name_and_transcript = str_c(name, transcript, sep = ": ")) %>% # Make check_in_date a date data type and create new variable that contains name and transcript
+        filter(str_detect(membership_id, pattern = "^48Z"),
+               membership_status == "gold",
+               str_detect(plate_number, pattern = "H42W"),
+               gender == "male",
+               check_in_date == mdy("January 09, 2018")
+               ) %>% # Filter for a male gold member at Get Fit who checked in on January 9, 2018, with a member id that starts with "48Z", and a license plate containing "H42W"
+        pull(name_and_transcript) # Extract name and transcript of initial suspect
 ```
 
 -   Date (example must use functions from **lubridate**)
@@ -431,19 +439,22 @@ inner_join(x = get_fit_now_check_in,
            by = join_by(membership_id == id)
            ) %>% # Join Get Fit check in and membership data by member id
   inner_join(y = person,
-             by = join_by(person_id == id)
+             by = join_by(person_id == id, name == name)
              ) %>% # Join new data set with person data set by person id
     inner_join(y = drivers_license,
                by = join_by(license_id == id)
                ) %>% # Join previous data set with driver's license data set by license id
-    mutate(check_in_date = ymd(check_in_date)) %>% 
-      filter(str_detect(membership_id, pattern = "^48Z"),
-             membership_status == "gold",
-             str_detect(plate_number, pattern = "H42W"),
-             gender == "male",
-             check_in_date == mdy("January 09, 2018")
-             ) %>% # Filter for a male gold member at Get Fit who checked in on January 9, 2018, with a member id that starts with "48Z", and a license plate containing "H42W"
-      pull(name.x) # Extract name of initial suspect
+      inner_join(y = interview,
+            by = join_by(person_id == person_id)) %>% # Join previous data with interview data by person id
+      mutate(check_in_date = ymd(check_in_date),
+             name_and_transcript = str_c(name, transcript, sep = ": ")) %>% # Make check_in_date a date data type and create new variable that contains name and transcript
+        filter(str_detect(membership_id, pattern = "^48Z"),
+               membership_status == "gold",
+               str_detect(plate_number, pattern = "H42W"),
+               gender == "male",
+               check_in_date == mdy("January 09, 2018")
+               ) %>% # Filter for a male gold member at Get Fit who checked in on January 9, 2018, with a member id that starts with "48Z", and a license plate containing "H42W"
+        pull(name_and_transcript) # Extract name and transcript of initial suspect
 ```
 
 **WD-5: I can use mutating joins to combine multiple dataframes.**
@@ -519,18 +530,22 @@ inner_join(x = get_fit_now_check_in,
            by = join_by(membership_id == id)
            ) %>% # Join Get Fit check in and membership data by member id
   inner_join(y = person,
-             by = join_by(person_id == id)
+             by = join_by(person_id == id, name == name)
              ) %>% # Join new data set with person data set by person id
     inner_join(y = drivers_license,
                by = join_by(license_id == id)
                ) %>% # Join previous data set with driver's license data set by license id
-      filter(str_detect(membership_id, pattern = "^48Z"),
-             membership_status == "gold",
-             str_detect(plate_number, pattern = "H42W"),
-             gender == "male",
-             check_in_date == 20180109
-             ) %>% # Filter for a male gold member at Get Fit who checked in on January 9, 2018, with a member id that starts with "48Z", and a license plate containing "H42W"
-      pull(name.x) # Extract name of initial suspect
+      inner_join(y = interview,
+            by = join_by(person_id == person_id)) %>% # Join previous data with interview data by person id
+      mutate(check_in_date = ymd(check_in_date),
+             name_and_transcript = str_c(name, transcript, sep = ": ")) %>% # Make check_in_date a date data type and create new variable that contains name and transcript
+        filter(str_detect(membership_id, pattern = "^48Z"),
+               membership_status == "gold",
+               str_detect(plate_number, pattern = "H42W"),
+               gender == "male",
+               check_in_date == mdy("January 09, 2018")
+               ) %>% # Filter for a male gold member at Get Fit who checked in on January 9, 2018, with a member id that starts with "48Z", and a license plate containing "H42W"
+        pull(name_and_transcript) # Extract name and transcript of initial suspect
 ```
 
 **WD-6: I can use filtering joins to filter rows from a dataframe.**
@@ -664,12 +679,14 @@ ggplot(data = surveys,
 ```{r}
 #| label: r-2-2
 
-# Lab 4 Q3
+# Lab 4 Q2
 
-ca_childcare <- ca_childcare %>% 
-  left_join(y = tax_rev,
-            by = join_by(county_name == entity_name, study_year == year)
-            )
+ca_childcare <- counties %>%
+  inner_join(x = counties,
+             y = childcare_costs,
+             by = join_by(county_fips_code == county_fips_code)
+             ) %>% 
+  filter(state_name == "California")
 ```
 
 -   Example of function formatting
@@ -1058,18 +1075,13 @@ ggplot(data = surveys,
 ```{r}
 #| label: dvs-4-summarize
 
-# Lab 4 Q6
+# Lab 3 Q9
 
-ca_childcare %>% 
-  group_by(region, study_year) %>% 
-  summarize(med_infant = median(mc_infant)) %>% 
-  filter(study_year == 2018) %>% 
-  ungroup() %>% 
-  pivot_wider(
-              names_from = study_year,
-              values_from = med_infant
-              ) %>% 
-  slice_min(order_by = `2018`)
+teacher_evals_clean |>
+  group_by(course_id, teacher_id) |>
+  summarize(questions_count = n_distinct(question_no)) |>
+  filter(questions_count == 9)|>
+  ungroup()
 ```
 
 -   Example using `across()`
@@ -1170,6 +1182,18 @@ teacher_evals_clean <- teacher_evals |>
     course_id, teacher_id, question_no, no_participants, resp_share,
     SET_score_avg, percent_failed_cur, academic_degree, seniority, sex
   )
+
+# Lab 9 Q3
+
+surveys %>% 
+  map_chr(.f = ~ class(.x)) %>% 
+  enframe(name = "Variable",
+          value = "Data Type") %>% 
+  arrange(`Data Type`, Variable) %>% 
+  gt() %>% 
+  cols_label(Variable = md("**Variable**"),
+             `Data Type` = md("**Data Type**")) %>% 
+  tab_header(title = md("**Portal Project Data Variables**"))
 ```
 
 -   I can modify the text in my table to be more readable (e.g., bold face for column headers)
