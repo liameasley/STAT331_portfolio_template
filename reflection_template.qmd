@@ -916,14 +916,26 @@ mhi_cbc %>%
 ```{r}
 #| label: dvs-2-ex-4
 
-# Lab 2 Q8
+# Lab 4 Q8
 
-ggplot(data = surveys, 
-       mapping = aes(x = species, y = weight)) +
-  geom_jitter(alpha = 0.1, color = "steelblue") +
-  geom_boxplot(outlier.shape = NA) +
-  labs(x = "Species", y = "Weight (g)") +
-  theme(axis.text.x = element_text(angle = 45))
+mhi_cbc <- ca_childcare %>% 
+  select(region, study_year, mhi_2018, mc_infant) %>% 
+  group_by(region, study_year) %>% 
+  summarize(med_mhi_2018 = median(mhi_2018),
+            med_mc_infant = median(mc_infant)) %>% 
+  ungroup()
+
+mhi_cbc %>% 
+  ggplot(mapping = aes(x = med_mhi_2018,
+                       y = med_mc_infant)) +
+    geom_point() + 
+    geom_smooth(method = lm) +
+    theme_bw() +
+    labs(x = "Median Household Income (in 2018 dollars)",
+         y = "Full-time median weekly price",
+         title = "California Household Income and Center-based Childcare for Infants") +
+    scale_x_continuous(labels = scales::label_currency(prefix = "$")) +
+    scale_y_continuous(labels = scales::label_currency(prefix = "$"))
 ```
 
 -   I can reorder my legend to align with the colors in my plot
@@ -1040,17 +1052,28 @@ ca_childcare %>%
 ```{r}
 #| label: dvs-3-2
 
-# Lab 2 Q4
+# Lab 4 Q8
 
-ggplot(data = surveys,
-       mapping = aes(x = weight, y = hindfoot_length)) +
-  geom_point(alpha = .1) +
-  facet_wrap(~species) +
-  labs(x = "Hindfoot Length (mm)",
-       y = NULL,
-       title = "Rodent Observations from the Portal Project",
-       subtitle = "Weight (g)") +
-  geom_text(mapping = aes(label = species))
+mhi_cbc <- ca_childcare %>% 
+  select(region, study_year, mhi_2018, mc_infant) %>% 
+  group_by(region, study_year) %>% 
+  summarize(med_mhi_2018 = median(mhi_2018),
+            med_mc_infant = median(mc_infant)) %>% 
+  ungroup()
+
+mhi_cbc %>% 
+  ggplot(mapping = aes(x = med_mhi_2018,
+                       y = med_mc_infant)) +
+    geom_point() + 
+    geom_smooth(method = lm) +
+    theme_bw() +
+    labs(x = "Median Household Income (in 2018 dollars)",
+         y = "Full-time median weekly price",
+         title = "California Household Income and Center-based Childcare for Infants") +
+    scale_x_continuous(labels = scales::label_currency(prefix = "$")) +
+    scale_y_continuous(labels = scales::label_currency(prefix = "$")) +
+    annotate(geom = "text", x = 75000, y = 380, label = "y = 136.5 + 0.00221x") +
+    annotate(geom = "text", x = 75000, y = 365, label = "R-Sq: 0.6303")
 ```
 
 -   I can choose creative geometries (e.g., `geom_segment()`, `geom_ribbon)()`)
