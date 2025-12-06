@@ -715,19 +715,13 @@ remove_unlikely <- function(vec, min, max){
 ```{r}
 #| label: r-3-example
 
-# Lab 4 Q5
+# Lab 7 Q4
 
-ca_childcare %>% 
-  group_by(region, study_year) %>% 
-  summarize(med = median(mhi_2018)) %>% 
-  ungroup() %>%
-  filter(study_year %in% c(2010, 2018)) %>% 
-  pivot_wider(
-              names_from = study_year,
-              values_from = med,
-              names_prefix = "med_income_"
-              ) %>% 
-  arrange(desc("med_income_2018"))
+rescale_01 <- function(vec){
+  stopifnot(is.numeric(vec), length(vec) > 1)
+  vec_range <- range(vec, na.rm = TRUE)
+  (vec - vec_range[1]) / (vec_range[2] - vec_range[1])
+  }
 ```
 
 -   Example (function stops)
@@ -772,14 +766,28 @@ ggplot(data = surveys,
 ```{r}
 #| label: dvs-2-num-cat
 
-# Lab 2 Q8
+# Challenge 7 Q5
 
-ggplot(data = surveys, 
-       mapping = aes(x = species, y = weight)) +
-  geom_jitter(alpha = 0.1, color = "steelblue") +
-  geom_boxplot(outlier.shape = NA) +
-  labs(x = "Species", y = "Weight (g)") +
-  theme(axis.text.x = element_text(angle = 45))
+fish %>% 
+  mutate(length = length / 10,
+         length = remove_unlikely(length, 5, 80),
+         weight = remove_unlikely(weight, 10, 4000)) %>% 
+  filter(!is.na(weight) & !is.na(length)) %>% 
+  mutate(cond_index = cond_index_func(weight, length)) %>% 
+  group_by(year, section, species) %>% 
+  summarize(med_cond_index = median(cond_index), .groups = "drop") %>% 
+  ggplot(mapping = aes(x = year,
+                       y = med_cond_index,
+                       color = species)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  facet_wrap(~ section) +
+  theme_bw() +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "Year",
+       y = "Condition Index",
+       color = "Species",
+       title = "Trends in Blackfoot River Trout Condition Index")
 ```
 
 -   At least two categorical variables
@@ -787,15 +795,23 @@ ggplot(data = surveys,
 ```{r}
 #| label: dvs-2-cat
 
-# Challenge 2
+# Challenge 3 Q2
 
-ggplot(data = surveys, 
-       mapping = aes(y = species, x = weight, fill = sex)) +
-  geom_jitter(alpha = 0.1, color = "steelblue") +
-  geom_boxplot(outlier.shape = NA) +
-  labs(subtitle = "Species", y = NULL, x = "Weight (g)", fill = "Sex") +
-  scale_fill_brewer(palette = "PuRd") +
-  theme_bw()
+teacher_evals_compare |> 
+  ggplot(mapping = aes(x = sen_level, fill = SET_level)) +
+    geom_bar(stat = "count", position = "fill") +
+    scale_y_continuous(labels = percent_format()) +
+    scale_fill_manual(
+      values = c("excellent" = "#b896d4",
+                 "standard" = "#ba955c"
+                 )) +
+    labs(title = "Evaluation of Teachers' Use of Activities",
+         x = "Years of Experience",
+         y = NULL,
+         fill = "Evaluation Rating"
+         ) +
+    theme_bw() +
+    theme(legend.position = "top")
 ```
 
 -   Dates (time series plot)
@@ -849,15 +865,43 @@ ca_childcare %>%
 ```{r}
 #| label: dvs-2-ex-1
 
-# Challenge 2
+# Lab 4 Q7 (modified)
 
-ggplot(data = surveys, 
-       mapping = aes(y = species, x = weight, fill = sex)) +
-  geom_jitter(alpha = 0.1, color = "steelblue") +
-  geom_boxplot(outlier.shape = NA) +
-  labs(subtitle = "Species", y = NULL, x = "Weight (g)", fill = "Sex") +
-  scale_fill_brewer(palette = "PuRd") +
-  theme_bw()
+ca_childcare %>% 
+  select(region, study_year, starts_with("mc_")) %>%  
+  group_by(region, study_year) %>% 
+  summarize(across(.cols = c(mc_infant, mc_toddler, mc_preschool), .fns = ~ median(.x), .names = "med_{.col}")) %>% 
+  ungroup() %>% 
+  pivot_longer(cols = med_mc_infant : med_mc_preschool,
+               names_to = "Age Group",
+               values_to = "Amount") %>% 
+  mutate(`Age Group` = fct_recode(.f = `Age Group`,
+                                  "Infant" = "med_mc_infant",
+                                  "Toddler" = "med_mc_toddler",
+                                  "Preschool" = "med_mc_preschool"),
+         `Age Group` = fct_relevel(`Age Group`, "Infant", "Toddler", "Preschool")
+         ) %>% 
+  ggplot(mapping = aes(x = study_year,
+                       y = Amount,
+                       color = fct_reorder2(.f = region,
+                                            .x = study_year,
+                                            .y = Amount)
+                       )) +
+    facet_wrap(~`Age Group`) +
+    geom_point() +
+    geom_smooth(method = loess, formula = y ~ x) +
+    scale_color_brewer(palette = "Set2") +
+    labs(x = "Study Year",
+         y = NULL,
+         title = "Weekly Median Price for Center-Based Childcare ($)",
+         color = "California Region") +
+    scale_x_continuous(breaks = seq(2008, 2018, by =2)) +
+    theme_bw() +
+    theme(aspect.ratio = 1,
+          axis.text.x  = element_text(size = 5),
+          plot.title = element_text(size = 10),
+          legend.text = element_text(size = 6.5)) +
+    scale_y_continuous(labels = scales::label_currency(prefix = "$"))
 ```
 
 -   I can modify my colors to be accessible to anyone's eyes
@@ -865,15 +909,17 @@ ggplot(data = surveys,
 ```{r}
 #| label: dvs-2-ex-2
 
-# Challenge 3 Q2
+# Challenge 3 Q2 
+
+# Used first color-blind friendly color pairing from https://www.nceas.ucsb.edu/sites/default/files/2022-06/Colorblind%20Safe%20Color%20Schemes.pdf
 
 teacher_evals_compare |> 
   ggplot(mapping = aes(x = sen_level, fill = SET_level)) +
     geom_bar(stat = "count", position = "fill") +
     scale_y_continuous(labels = percent_format()) +
     scale_fill_manual(
-      values = c("excellent" = "#b896d4",
-                 "standard" = "#ba955c"
+      values = c("excellent" = "#025196",
+                 "standard" = "#fdb338"
                  )) +
     labs(title = "Evaluation of Teachers' Use of Activities",
          x = "Years of Experience",
@@ -1081,14 +1127,36 @@ mhi_cbc %>%
 ```{r}
 #| label: dvs-3-3
 
-# Lab 2 Q16
+# Lab 10 Q13
 
-ggplot(data = surveys, 
-       mapping = aes(y = species, x = weight)) +
-  geom_jitter(alpha = 0.1, color = "steelblue") +
-  geom_boxplot(outlier.shape = NA) +
-  labs(y = "Species", x = "Weight (g)") +
-  geom_violin()
+set.seed(67)
+
+ci_dat %>% 
+  slice_sample(n = 100) %>% 
+  mutate(sim = row_number()) %>%
+  ggplot(mapping = aes(y = sim,
+                       x = estimate,
+                       xmin = conf.low,
+                       xmax = conf.high,
+                       color = factor(cover))) +
+  geom_errorbar() +
+  geom_vline(xintercept = 0.5,
+             linetype = "dashed") +
+  scale_color_manual(values = c("1" = "lightblue", "0" = "red")) +
+  labs(title = "95% Confidence Intervals of Estimated Regression Slope for 100 Simulated Datasets",
+       subtitle = "CIs that DO NOT include the true slope are highlighted in RED",
+       x = "Slope Coefficient Estimate",
+       y = NULL,
+       color = NULL,
+       caption = "Population Slope = 0.50") +
+  scale_y_continuous(breaks = NULL) +
+  scale_x_continuous(labels = scales::label_number(accuracy = 0.01),
+                     breaks = c(-1.00, -0.50, 0.00, 0.50, 1.00, 1.50, 2.00),
+                     limits = c(-1.15, 2.15)) +
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 12, face = "bold"),
+        plot.caption = element_text(size = 9, color = "gray", hjust = 0.5))
 ```
 
 **DVS-4: I can calculate numerical summaries of variables.**
@@ -1098,13 +1166,11 @@ ggplot(data = surveys,
 ```{r}
 #| label: dvs-4-summarize
 
-# Lab 3 Q9
+# Lab 3 Q6
 
 teacher_evals_clean |>
-  group_by(course_id, teacher_id) |>
-  summarize(questions_count = n_distinct(question_no)) |>
-  filter(questions_count == 9)|>
-  ungroup()
+  summarize(unique_instructors = n_distinct(teacher_id),
+            unique_courses = n_distinct(course_id))
 ```
 
 -   Example using `across()`
@@ -1195,28 +1261,48 @@ ca_childcare %>%
 ```{r}
 #| label: dvs-6-ex-1
 
-# Lab 3 Q5
+# Lab 9 Q6
 
-teacher_evals_clean <- teacher_evals |>
-  rename(sex = gender) |>
-  filter(no_participants >= 10) |>
-  mutate(across(.cols = c(teacher_id, course_id), .fns = ~ as.character(.x))) |>
-  select(
-    course_id, teacher_id, question_no, no_participants, resp_share,
-    SET_score_avg, percent_failed_cur, academic_degree, seniority, sex
-  )
-
-# Lab 9 Q3
-
-surveys %>% 
-  map_chr(.f = ~ class(.x)) %>% 
-  enframe(name = "Variable",
-          value = "Data Type") %>% 
-  arrange(`Data Type`, Variable) %>% 
-  gt() %>% 
-  cols_label(Variable = md("**Variable**"),
-             `Data Type` = md("**Data Type**")) %>% 
-  tab_header(title = md("**Portal Project Data Variables**"))
+teacher_evals_clean %>% 
+  distinct(teacher_id, .keep_all = TRUE) %>% 
+  mutate(sen_level = case_when(
+           seniority <= 4 ~ "Junior",
+           seniority >= 5  ~ "Senior"
+           )
+         ) %>% 
+  select(academic_degree, sen_level, sex) %>% 
+  map_at(
+    .at = c("academic_degree", "sen_level", "sex"),
+    .f  = ~ tibble(level = as.character(.x)) %>%
+            count(level, name = "n") %>%
+            mutate(prop = percent((n / sum(n)), accuracy = 0.01))
+    ) %>%  
+  bind_rows(.id = "variable") %>% 
+  mutate(
+    variable = recode(variable,
+                      academic_degree = "Academic Degree",
+                      sen_level       = "Seniority",
+                      sex             = "Sex"
+    ),
+    level = recode(level,
+                   dr = "Doctorate", 
+                   ma = "Masters",
+                   no_dgr = "No Degree",
+                   prof = "Tenured Professor",
+                   female = "Female",
+                   male = "Male")
+    
+    ) %>% 
+  arrange(variable, level) %>% 
+  kable(
+    col.names = c("Demographic", "Group", "Count", "%"),
+    caption = "Instructor Demographics at the University of Poland",
+    align = "c"
+    ) %>% 
+  kable_styling(full_width = FALSE, bootstrap_options = "striped") %>% 
+  collapse_rows(columns = 1) %>% 
+  add_header_above(c(" " = 2, "Professor" = 2)) %>%
+  kable_minimal()
 ```
 
 -   I can modify the text in my table to be more readable (e.g., bold face for column headers)
@@ -1412,43 +1498,10 @@ remove_unlikely <- function(vec, min, max){
 ```{r}
 #| label: pe-3-across
 
-# Lab 4 Q7 (modified)
+# Lab 3 Q8 
 
-ca_childcare %>% 
-  select(region, study_year, starts_with("mc_")) %>%  
-  group_by(region, study_year) %>% 
-  summarize(across(.cols = c(mc_infant, mc_toddler, mc_preschool), .fns = ~ median(.x), .names = "med_{.col}")) %>% 
-  ungroup() %>% 
-  pivot_longer(cols = med_mc_infant : med_mc_preschool,
-               names_to = "Age Group",
-               values_to = "Amount") %>% 
-  mutate(`Age Group` = fct_recode(.f = `Age Group`,
-                                  "Infant" = "med_mc_infant",
-                                  "Toddler" = "med_mc_toddler",
-                                  "Preschool" = "med_mc_preschool"),
-         `Age Group` = fct_relevel(`Age Group`, "Infant", "Toddler", "Preschool")
-         ) %>% 
-  ggplot(mapping = aes(x = study_year,
-                       y = Amount,
-                       color = fct_reorder2(.f = region,
-                                            .x = study_year,
-                                            .y = Amount)
-                       )) +
-    facet_wrap(~`Age Group`) +
-    geom_point() +
-    geom_smooth(method = loess, formula = y ~ x) +
-    scale_color_brewer(palette = "Set2") +
-    labs(x = "Study Year",
-         y = NULL,
-         title = "Weekly Median Price for Center-Based Childcare ($)",
-         color = "California Region") +
-    scale_x_continuous(breaks = seq(2008, 2018, by =2)) +
-    theme_bw() +
-    theme(aspect.ratio = 1,
-          axis.text.x  = element_text(size = 5),
-          plot.title = element_text(size = 10),
-          legend.text = element_text(size = 6.5)) +
-    scale_y_continuous(labels = scales::label_currency(prefix = "$"))
+teacher_evals_clean |>
+  filter(if_any(.cols = everything(), .fns = ~ is.na(.x)))
 ```
 
 -   using a `map()` function with **one** input (e.g., `map()`, `map_chr()`, `map_dbl()`, etc.)
@@ -1665,6 +1718,6 @@ Thus far in the course, I have extended my thinking by really honing in on the f
 
 <!-- Include a description of how you grew as a collaborator through the weekly pair programming activities.   -->
 
-The image I included is a question I asked and then Dr. T answered about peer code reviews. I thought this might be a common question as I have in the past done peer code reviews that focused on different aspects such as focusing more on efficiency. So I’m proud because I think it could have been a common question others had. I also remember leaving a suggestion in one of my peer reviews about using “::” in your code. Namely, that you only really need to use it when you want to use a function from a package that you don’t need or want to fully load in. I was proud of this because it was something I learned from Dr. T and then pass on to a classmate. As far as the weekly pair programming activities go, I feel that I have grown a lot in both roles. As the computer, I have improved at really letting my partner think through their own ideas and not immediately do what I think is right (allowing me to learn new methods I didn’t know prior). As the coder, I have gotten a lot better at being independent and utilizing the resources provided rather than going straight to someone else or outside resources. I have grown extremely fond of the documentation pages for functions.
+The image I included is a question I asked and then Dr. T answered about peer code reviews. I thought this might be a common question as I have in the past done peer code reviews that focused on different aspects such as focusing more on efficiency. So I’m proud because I think it could have been a common question others had. I also remember leaving a suggestion in one of my peer reviews about using “::” in your code. Namely, that you only really need to use it when you want to use a function from a package that you don’t need or want to fully load in. I was proud of this because it was something I learned from Dr. T and then pass on to a classmate. As far as the weekly pair programming activities go, I feel that I have grown a lot in both roles. As the computer, I have improved at really letting my partner think through their own ideas and not immediately do what I think is right (allowing me to learn new methods I didn’t know prior). As the coder, I have gotten a lot better at being independent and utilizing the resources provided rather than going straight to someone else or outside resources. I have grown extremely fond of the help documentation pages for functions.
 
 ![](images/clipboard-4124676572.png)

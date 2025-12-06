@@ -8,7 +8,7 @@ editor: visual
 
 1.  Finish the sentence with another student’s name: "If \[Name of Student\] doesn’t earn an A, then nobody should, because..." Explain your choice and your reasoning.\
     \
-    If Sam Phan doesn’t earn an A, then nobody should, because while I never worked with him at my table or in a practice activity, I was able to see his superior proficiency through multiple code reviews and my difficulty in finding ways for him to improve.
+    If Sam Phan doesn’t earn an A, then nobody should, because while I never worked with him at my table or in a practice activity, I was able to see his superior proficiency through multiple code reviews and the difficulty I had finding ways for him to improve.
 
 2.  What was the most difficult part of the class for you? List a general topic, a specific problem, a kind of work we did, etc. and explain why.\
     \
@@ -16,7 +16,7 @@ editor: visual
 
 3.  What was the easiest part of the class for you? Explain why.\
     \
-    I think the easiest or most comfortable part of the class for me was when we wrote functions because I already had experience doing it in CSC 101, I quite enjoy creating something of my own, and I know exactly how it works.
+    I think the easiest or most comfortable part of the class for me was when we wrote functions because I already had experience doing it in CSC 101, I quite enjoy creating something of my own, and I know exactly how it works (making it easy to use).
 
 4.  What part of the class surprised or interested you the most? Explain why.\
     \
